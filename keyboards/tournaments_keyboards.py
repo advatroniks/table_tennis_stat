@@ -13,7 +13,8 @@ def get_select_tournament_keyboard() -> InlineKeyboardMarkup:
 
     return keyboard
 
-def get_member_counts_keyboard() -> None:
+
+def get_member_counts_keyboard() -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardMarkup(row_width=4)
 
     for i in range(48):
@@ -24,26 +25,19 @@ def get_member_counts_keyboard() -> None:
         else:
             pass
 
-
     return keyboard
 
 
 def get_confirm_include_tournament(tournament_id: str) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardMarkup()
-    button_1 = InlineKeyboardButton(text='Подтверждаю', callback_data=f'confirm_tournament_{tournament_id}')
+    button_1 = InlineKeyboardButton(
+        text='Подтверждаю',
+        callback_data=f'confirm_tournament-----{tournament_id}')
     button_2 = InlineKeyboardButton(text='Отклоняю', callback_data='reject_tournament')
 
     keyboard.row(button_1, button_2)
 
     return keyboard
-
-
-def get_main_tournament_menu() -> InlineKeyboardMarkup:
-    keyboard = InlineKeyboardMarkup()
-    button_1 = InlineKeyboardButton(text='Список текущих игр', callback_data='main_menu_gamelist')
-    button_2 = InlineKeyboardButton(text='Турнирная таблица', callback_data='main_menu_tour_table')
-    button_3 = InlineKeyboardButton(text='Список участников турнира', callback_data='main_menu_members')
-    button_4 = InlineKeyboardButton(text='Мой текущий матч', callback_data='main_menu_livegame')
 
 
 def start_tournament_keyboard() -> InlineKeyboardMarkup:
@@ -52,5 +46,29 @@ def start_tournament_keyboard() -> InlineKeyboardMarkup:
     button_2 = InlineKeyboardButton(text='Отменить турнир', callback_data='cancel_tournament')
 
     keyboard.add(button_1, button_2)
+
+    return keyboard
+
+
+def get_tournament_menu_keyboard(is_active_gamer=1) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup()
+    button_1 = InlineKeyboardButton(text='Участники Турнира', callback_data='get_tournaments_members')
+    button_2 = InlineKeyboardButton(text='Текущие игры', callback_data='get_online_games_on_tables')
+    button_3 = InlineKeyboardButton(text='Просмотреть текущие очки:', callback_data='check_tournament_rating')
+    button_4 = InlineKeyboardButton(text='Указать счет матча', callback_data='add_game')
+
+    keyboard.add(button_1, button_2, button_3)
+
+    if is_active_gamer != 1:
+        keyboard.add(button_4)
+
+    return keyboard
+
+
+def get_back_button() -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup()
+    button_1 = InlineKeyboardButton(text='Назад', callback_data='back_to_menu')
+
+    keyboard.add(button_1)
 
     return keyboard

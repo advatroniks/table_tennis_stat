@@ -10,3 +10,4 @@ class TournamentStaes(StatesGroup):
     absolute_insert_1 = State()
     users_tournament_menu = State()
     confirm_member_state = State()
+    tournament_begin_state = State()

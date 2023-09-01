@@ -6,7 +6,7 @@ def main_office_keyboard() -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardMarkup()
     statistic_btn = InlineKeyboardButton(text='Статистика',callback_data='statistics')
     last_games_btn = InlineKeyboardButton(text='Последние игры', callback_data='last_games')
-    add_game_btn = InlineKeyboardButton(text='Добавить игру', callback_data='add_game')
+    add_game_btn = InlineKeyboardButton(text='Добавить игру', callback_data='addgame')
     add_profile_photo = InlineKeyboardButton(text='Добавить фото профиля', callback_data='add_profile_photo')
     update_info_btn = InlineKeyboardButton(text='Обновить информацию', callback_data='update_info')
     select_player_for_rate = InlineKeyboardButton(text='Выбрать игрока для сравнения', callback_data='rate_player')

@@ -98,7 +98,7 @@ async def cmd_open_office(message: types.Message) -> None:
     await message.answer(text=result_string,
                          reply_markup=keyboard)
 
-
+89028066003
 def registrate_main_commands(dp: Dispatcher) -> None:
     """
     Регистрация хендлеров комманд

@@ -108,6 +108,6 @@ async def get_player_data_for_rate(message: types.Message, state = FSMContext) -
 def register_office_handlers(dp: Dispatcher) -> None:
     dp.register_callback_query_handler(get_full_statistics, lambda callback_query: callback_query.data == 'last_games')
     dp.register_callback_query_handler(get_win_lose_counts, lambda callback_query: callback_query.data == 'statistics')
-    dp.register_callback_query_handler(insert_data_game, lambda callback_query: callback_query.data == 'add_game')
+    dp.register_callback_query_handler(insert_data_game, lambda callback_query: callback_query.data == 'addgame')
     dp.register_callback_query_handler(insert_player_for_rate, lambda callback_query: callback_query.data == 'rate_player')
     dp.register_message_handler(get_player_data_for_rate, state=OfficeStates.get_player_for_rate)
