@@ -57,7 +57,8 @@ def get_tournament_menu_keyboard(is_active_gamer=1) -> InlineKeyboardMarkup:
     button_3 = InlineKeyboardButton(text='Просмотреть текущие очки:', callback_data='check_tournament_rating')
     button_4 = InlineKeyboardButton(text='Указать счет матча', callback_data='add_game')
 
-    keyboard.add(button_1, button_2, button_3)
+    keyboard.row(button_1, button_2)
+    keyboard.row(button_3)
 
     if is_active_gamer != 1:
         keyboard.add(button_4)
