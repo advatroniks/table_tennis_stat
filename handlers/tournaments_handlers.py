@@ -3,9 +3,9 @@ import asyncio
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 
-from bot.keyboards.tournaments_keyboards import *
-from bot.states.tournament_states import TournamentStaes
-from bot.database.tournaments_db import *
+from keyboards.tournaments_keyboards import *
+from states.tournament_states import TournamentStaes
+from database.tournaments_db import *
 
 from bot_instance import bot
 from buffer import buffer

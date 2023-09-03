@@ -1,8 +1,8 @@
 from aiogram import Dispatcher, types
-from bot.database.office_db import *
-from bot.states.add_game_states import AddGameStates
-from bot.database.add_game_db import get_rivals, get_first_player
-from bot.states.office_states import OfficeStates
+from database.office_db import *
+from states.add_game_states import AddGameStates
+from database.add_game_db import get_rivals, get_first_player
+from states.office_states import OfficeStates
 from aiogram.dispatcher import FSMContext
 
 

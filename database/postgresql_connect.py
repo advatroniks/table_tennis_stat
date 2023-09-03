@@ -1,12 +1,18 @@
 import psycopg
+import os
 
+from dotenv import load_dotenv
 
+load_dotenv('.env')
+
+owner = os.getenv("OWNER")
+password = os.getenv("PASSWORD")
 def connection():
     conn = psycopg.connect(
-        user='tikhon',
+        user=owner,
         dbname='tennis_stat',
         host='localhost',
-        password='123'
+        password=password
     )
 
     cur = conn.cursor()

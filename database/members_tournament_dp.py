@@ -1,6 +1,6 @@
-from bot.database.postgresql_connect import conn
-from bot.database.add_game_db import get_first_player
-from bot.database.tournaments_db import add_game_rating_in_tournament
+from database.postgresql_connect import conn
+from database.add_game_db import get_first_player
+from database.tournaments_db import add_game_rating_in_tournament
 
 
 async def add_game_to_database(

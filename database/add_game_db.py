@@ -2,7 +2,7 @@ import asyncio
 from uuid import uuid4
 
 import psycopg
-from bot.database.postgresql_connect import cursor, conn
+from database.postgresql_connect import cursor, conn
 from aiogram import types
 
 

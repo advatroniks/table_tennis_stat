@@ -1,0 +1,3 @@
+[console_scripts]
+bracket = bracket.bracket:run
+

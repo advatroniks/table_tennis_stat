@@ -1,5 +1,5 @@
 from aiogram import types
-from bot.database.postgresql_connect import conn
+from database.postgresql_connect import conn
 
 
 async def get_telegram_id(rival_name: str):

@@ -1,8 +1,8 @@
 from aiogram import Dispatcher, types
-from bot.states.add_game_states import AddGameStates, AddScoreSetsStates
+from states.add_game_states import AddGameStates, AddScoreSetsStates
 from aiogram.dispatcher import FSMContext
-from bot.database.add_game_db import get_rivals, get_first_player, insert_data_score, insert_full_data_score
-from bot.keyboards.add_game_keyboard import game_score_keyboard, get_sets_count_keyboard, get_choice_game_type
+from database.add_game_db import get_rivals, get_first_player, insert_data_score, insert_full_data_score
+from keyboards.add_game_keyboard import game_score_keyboard, get_sets_count_keyboard, get_choice_game_type
 
 
 async def select_rival(message: types.Message, state=FSMContext) -> None:

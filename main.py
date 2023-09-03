@@ -5,12 +5,12 @@ from aiogram import Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 
-from bot.handlers.main_commands_handlers import registrate_main_commands
-from bot.handlers.registration_handlers import registser_user_handlers
-from bot.handlers.add_game_handlers import register_add_game_handlers
-from bot.handlers.office_handlers import register_office_handlers
-from bot.handlers.tournaments_handlers import register_tournaments_handlers
-from bot.handlers.members_tournaments_handlers import register_members_tournament_handlers
+from handlers.main_commands_handlers import registrate_main_commands
+from handlers.registration_handlers import registser_user_handlers
+from handlers.add_game_handlers import register_add_game_handlers
+from handlers.office_handlers import register_office_handlers
+from handlers.tournaments_handlers import register_tournaments_handlers
+from handlers.members_tournaments_handlers import register_members_tournament_handlers
 from bot_instance import bot
 
 

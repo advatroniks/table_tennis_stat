@@ -1,4 +1,4 @@
-from bot.database.postgresql_connect import connection
+from database.postgresql_connect import connection
 from aiogram.dispatcher import FSMContext
 
 conn = connection()

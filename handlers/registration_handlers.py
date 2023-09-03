@@ -1,11 +1,11 @@
 from uuid import UUID
 
 from aiogram import types, Dispatcher
-from bot.states.registration_states import PlayerRegistrationState
+from states.registration_states import PlayerRegistrationState
 from aiogram.dispatcher import FSMContext
 import datetime
-from bot.database.registration_db import record_data, conn
-from bot.keyboards.registration_keyboards import get_choice_keyboard
+from database.registration_db import record_data, conn
+from keyboards.registration_keyboards import get_choice_keyboard
 
 async def check_handler(message: types.Message) -> None:
     await message.reply('Пожалуйства, введите корректные данные!')

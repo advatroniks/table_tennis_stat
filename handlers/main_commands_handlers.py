@@ -1,13 +1,13 @@
 from aiogram import Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
-from bot.states.registration_states import PlayerRegistrationState
-from bot.states.add_game_states import AddGameStates
-from bot.database.registration_db import check_registration_user
-from bot.database.postgresql_connect import conn
-from bot.keyboards.office_keyboard import main_office_keyboard, moderator_office_keyboard, administrator_office_keyboard
+from states.registration_states import PlayerRegistrationState
+from states.add_game_states import AddGameStates
+from database.registration_db import check_registration_user
+from database.postgresql_connect import conn
+from keyboards.office_keyboard import main_office_keyboard, moderator_office_keyboard, administrator_office_keyboard
 from aiogram.dispatcher import FSMContext
-from bot.database.office_db import get_win_loses_statistics
+from database.office_db import get_win_loses_statistics
 from dotenv import load_dotenv
 import os
 
