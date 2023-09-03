@@ -98,7 +98,7 @@ async def insert_members_message_id(telegram_id: int, message_id: int, member_na
     cursor.close()
 
 
-async def add_game_rating_in_tournament(telegram_id: str|int, tournament_id: str, point:int) -> None:
+async def add_game_rating_in_tournament(telegram_id: str | int, tournament_id: str, point: int) -> None:
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -144,9 +144,6 @@ async def get_message_id_in_active_tournament(telegram_id: str) -> int:
     return int(cursor.fetchone()[0])
 
 
-
-
-
 async def check_player_confirmed_tournament(telegram_id: str, tournament_id: str) -> bool:
     cursor = conn.cursor()
     cursor.execute(
@@ -155,12 +152,13 @@ async def check_player_confirmed_tournament(telegram_id: str, tournament_id: str
         FROM all_tournaments
         WHERE all_tournament_id = '%s'
         """ % (telegram_id, tournament_id)
-                 )
+    )
 
     result = cursor.fetchone()[0]
     cursor.close()
 
     return result
+
 
 # def add_live_games(games: list, tournament_id: str) -> None:
 #     cursor = conn.cursor()
@@ -191,7 +189,7 @@ async def get_name_surname_on_telegram_id(telegram_id: str) -> str:
     return total_string
 
 
-async def get_all_members_rating(tournament_id: str) -> None:
+async def get_all_members_rating(tournament_id: str) -> dict:
     cursor = conn.cursor()
     cursor.execute("""
         SELECT players_list 
@@ -201,4 +199,5 @@ async def get_all_members_rating(tournament_id: str) -> None:
                    )
     result = cursor.fetchone()[0]
     cursor.close()
+
     return result

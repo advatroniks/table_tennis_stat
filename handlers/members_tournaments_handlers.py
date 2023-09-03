@@ -1,28 +1,18 @@
-from aiogram import Dispatcher, types, Bot
+from aiogram import Dispatcher
 from bot.states.member_tournament_states import *
 from bot.keyboards.tournaments_keyboards import *
 from bot.keyboards.members_tournament_keyboard import *
 from bot.handlers.tournaments_handlers import get_rival_and_table_number
 from bot.handlers.tournaments_handlers import check_player_is_in_tournament
 from aiogram.dispatcher import FSMContext
-from bot.database.add_game_db import get_rivals
 from bot.database.tournaments_db import *
 from bot.database.members_tournament_dp import *
-from dotenv import load_dotenv
-import os
 from buffer import buffer
-
+from bot_instance import bot
 
 """
-
 Программа которая отвечает за взаимодействие с участником турнира.
-
-
 """
-
-load_dotenv('.env')
-token = os.getenv("TOKEN_API")
-bot = Bot(token)
 
 
 # Функция получает телеграм айди, на выходе дает ключ турнира, где на данный момент участник играет.
@@ -45,7 +35,6 @@ async def get_all_members_in_tournament(callback: types.CallbackQuery) -> None:
 async def button_back_to_tournament_menu(callback: types.CallbackQuery) -> None:
     telegram_id = str(callback.from_user.id)
     await check_player_is_in_tournament(telegram_id=telegram_id)
-
 
 
 async def add_game_in_tournament(callback: types.CallbackQuery, state: FSMContext) -> None:
@@ -90,8 +79,6 @@ async def commit_game_to_database(callback: types.CallbackQuery, state: FSMConte
     await state.finish()
 
 
-
-
 async def get_online_scoreboard(callback: types.CallbackQuery) -> None:
     tournament_key = get_tournament_key_for_members(telegram_id=callback.from_user.id)
     message_id = await get_message_id_in_active_tournament(telegram_id=callback.from_user.id)
@@ -100,27 +87,36 @@ async def get_online_scoreboard(callback: types.CallbackQuery) -> None:
 
     result = ''
 
-    conditions = dict.fromkeys(range(1, len(table_conditions) // 2 + 1), [])
+    print(table_conditions)
 
-    print(conditions)
+    table_counter = 1
+    players_counter = 0
+    null_counter = 0
 
-    counter = 1
     for i in table_conditions:
-        player = await get_name_surname_on_telegram_id(telegram_id=i)
-        if counter % 2 != 0:
-            result += f'{counter}-й стол:{player}-'
-        else:
+        if i == 0 and null_counter == 0:
+            result += f'{table_counter} - й Стол: Свободен'
+            null_counter += 1
+        elif i == 0 and null_counter == 1:
+            result += '\n'
+            null_counter = 0
+            table_counter += 1
+
+        elif players_counter == 0:
+            player = await get_name_surname_on_telegram_id(telegram_id=i)
+            result += f'{table_counter} - й Стол: {player} - '
+            players_counter += 1
+        elif players_counter == 1:
+            player = await get_name_surname_on_telegram_id(telegram_id=i)
             result += f'{player}\n'
-        counter += 1
+            table_counter += 1
+            players_counter = 0
 
     await bot.edit_message_text(text=result,
                                 chat_id=callback.from_user.id,
                                 message_id=message_id,
                                 reply_markup=get_back_button()
                                 )
-
-
-
 
 
 async def get_tournament_rating(callback: types.CallbackQuery) -> None:
@@ -131,7 +127,6 @@ async def get_tournament_rating(callback: types.CallbackQuery) -> None:
                                 message_id=callback.message.message_id,
                                 chat_id=callback.from_user.id,
                                 reply_markup=get_back_button())
-
 
 
 def register_members_tournament_handlers(dp: Dispatcher) -> None:

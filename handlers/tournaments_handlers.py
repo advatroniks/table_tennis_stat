@@ -1,20 +1,29 @@
 import asyncio
 
-from aiogram import Dispatcher, types, Bot
+from aiogram import Dispatcher
+from aiogram.dispatcher import FSMContext
+
 from bot.keyboards.tournaments_keyboards import *
 from bot.states.tournament_states import TournamentStaes
-from aiogram.dispatcher import FSMContext
 from bot.database.tournaments_db import *
-from dotenv import load_dotenv
-import os
+
+from bot_instance import bot
 from buffer import buffer
 
-load_dotenv('.env')
-token = os.getenv("TOKEN_API")
-bot = Bot(token)
+# Определяем в глобальной области видимости buffer для турнира.
+# Подробное описание см.в файле buffer.py
+buffer = buffer
 
 
 def get_tournament_key_for_members(telegram_id: str) -> str:
+    """
+    Функция получает айди пользователя, проверяет, есть ли он в списке
+    участников какого либо АКТИВНОГО турнира, если находит совпадение,
+    то возвращает buffer[tournament_key] подробное описание buffer
+    в файле buffer.py
+    :param telegram_id:
+    :return: buffer[tournament_key]
+    """
     for i in buffer:
         if i.find(str(telegram_id)) != -1:
             return i
@@ -37,9 +46,16 @@ class Tournament:
         Если количество столов больше чем для одновременной игры всех участников
     """
 
-    global buffer
-
     def __init__(self, table_counts: int, tournament_key: str):
+        """
+        Инициализатор класса. Принимает количество столов, и ключ турнира(buffer[tournament_key])
+        Сверяет переданное количество столов с допустимым.
+        Определяет атрибуты экземпляра(количество столов, список игроков, ключ турнира,
+        генерирует все матчи турнира, так же распределяет первые матчи у данного турнира по столам)
+        :param table_counts:
+        :param tournament_key:
+        :return: None
+        """
         if table_counts * 2 > len(buffer[tournament_key]['tournament_members']):
             raise Exception('Tables > than players couples')
         self.table_counts = table_counts
@@ -67,11 +83,11 @@ class Tournament:
 
     def add_first_matches_on_tables(self):
         """
-        Метод, который при инициализации объекта добавляет матчи на все
+        Метод, при инициализации объекта добавляет матчи на все
         столы, которые указаны для турнира.
 
-        :return: table_conditions - список пар игроков(list) каждые два объекта по порядку - пара игроков.
-            номер стола - индекс второго игрока из пары
+        :return: Table_conditions - список пар игроков(list) каждые два объекта по порядку - пара игроков.
+            Номер стола - индекс второго игрока из пары
         """
         tables_conditions = []
         counter = 0
@@ -85,7 +101,6 @@ class Tournament:
                 tables_conditions.append(i[1])
                 counter += 1
                 self.matches.remove(i)
-        print(tables_conditions)
         self.input_table_conditions = tables_conditions
         buffer[self.tournament_key]['table_conditions'] = tables_conditions
         buffer[self.tournament_key]['games'] = self.matches
@@ -99,6 +114,10 @@ class Tournament:
         :return:
 
         """
+
+        # Главный цикл турнира, работает пока есть предстоящие матч,
+        # проверяет каждые ДВЕ секунды, освободились ли столы.
+        # Если есть свободный стол, то на него добавляется матч.
         while len(buffer[self.tournament_key]['games']) > 0:
             counter = 0
             print('after main')
@@ -116,16 +135,18 @@ class Tournament:
                         break
 
                     # Добавление матча на указанный выше стол, если успешно матч добавлен, то
-                    # этот матч удаляется из списка предстоящих матчей. и цикл завершается
+                    # этот матч удаляется из списка предстоящих матчей и цикл завершается.
                     if i[0] not in self.table_conditions and i[1] not in buffer[self.tournament_key]['table_conditions']:
                         print('test', finished_table)
                         buffer[self.tournament_key]['table_conditions'][finished_table] = i[0]
                         buffer[self.tournament_key]['table_conditions'][finished_table + 1] = i[1]
                         buffer[self.tournament_key]['games'].remove(i)
 
+                        # service_information
                         print('Game added! Success!!')
-                        print(buffer)
 
+                        # Цикл, проходит по паре игроков, которые были ТОЛЬКО ЧТО добавлены
+                        # на столы и меняет их турнирные сообщения на указание текущего матча.
                         for player in i:
                             rival, table = await get_rival_and_table_number(telegram_id=player)
                             name_surname_rival = await get_name_surname_on_telegram_id(telegram_id=rival)
@@ -137,15 +158,11 @@ class Tournament:
                                                         )
                         break
                     counter += 1
-
-                    print('game_added!')
-                    print(buffer[self.tournament_key]['table_conditions'])
             else:
                 print('Not free tables!')
 
             tournament_id = buffer[self.tournament_key]['tournament_id']
             players_dictionary = await get_all_members_rating(tournament_id=tournament_id)
-            print(players_dictionary)
             result_string = ''
             current_list = []
             for player_name, score in players_dictionary.items():
@@ -173,13 +190,9 @@ class Tournament:
                 break
 
 
-    def get_table_conditions(self):
-        return self.table_conditions
-
-
 async def select_tournament_type(callback: types.CallbackQuery) -> None:
     """
-    Функция принимает коллбэк, меняет инлайн клавиатуру на выбор типа турнира
+    Функция принимает callback, меняет inline keyboard на выбор типа турнира
     """
     await callback.message.edit_text(text='Выберите тип турнира:')
     await callback.message.edit_reply_markup(reply_markup=get_select_tournament_keyboard())
@@ -188,9 +201,9 @@ async def select_tournament_type(callback: types.CallbackQuery) -> None:
 
 async def get_members_counts_on_tournament(callback: types.CallbackQuery, state: FSMContext) -> None:
     """
-    Функция принимает коллбэк с типом турнира,
+    Функция принимает callback с типом турнира,
     выводит клавиатуру с выбором количества участников
-    записывает в state_data id чата и сообщения с меню,
+    записывает в state_data и id чата и сообщения с меню,
     для дальнейшей работы с этим сообщением
     """
     async with state.proxy() as tournament_data:
@@ -203,7 +216,7 @@ async def get_members_counts_on_tournament(callback: types.CallbackQuery, state:
 
 async def insert_inline_members(callback: types.CallbackQuery, state: FSMContext) -> None:
     """
-    Функция принимает коллбэк, состояние
+    Функция принимает callback, state
     записывает в state_data количество участников,
     указывает ключ counter-счетчик ввода количества участников
     меняет состояние на цикл ввода игроков
@@ -245,10 +258,6 @@ async def insert_member(message: types.Message, state: FSMContext) -> None:
 
     if tournament_data['counts_member'] == str(tournament_data['counter']):
         await set_active_tournament(tournament_data['tournament_id'])
-        # await bot.edit_message_reply_markup(chat_id=tournament_data['menu_chat_id'],
-        #                                     message_id=tournament_data['menu_message_id']
-        #                                     )
-
         await TournamentStaes.confirm_member_state.set()
         for i in tournament_data:
             if i[0:6] == 'member':
@@ -258,31 +267,31 @@ async def insert_member(message: types.Message, state: FSMContext) -> None:
                                        reply_markup=get_confirm_include_tournament(
                                            tournament_id=tournament_data['tournament_id'])
                                        )
-
+        # declared_members - ЗАЯВЛЕННЫЕ игроки, которые пока что не подтвердили участие.
         declared_members = tournament_data['list_members'].split(sep='\n')[1:-1]
         total_message = tournament_data['list_members']
         counter = 0
         while True:
             if len(declared_members) == 0:
-                await bot.edit_message_text(text = total_message,
+                await bot.edit_message_text(text=total_message,
                                             chat_id=tournament_data['menu_chat_id'],
                                             message_id=tournament_data['menu_message_id'],
                                             reply_markup=start_tournament_keyboard()
-                                                )
+                                            )
                 break
 
             await asyncio.sleep(5)
-            print('----------------------------------------------------')
+            # Цикл, который каждые 5 секунд проверяет, подтвердил ли игрок свое участие в турнире,
+            # если подтвердил, то он удаляется из ЗАЯВЛЕННЫХ ИГРОКОВ, ТАК КАК ОН ПОДТВЕРЖДЕННЫЙ игрок.
             for player in declared_members:
                 telegram_id = await get_telegram_id(rival_name=player)
                 tournament_id = tournament_data['tournament_id']
                 counter = 0
-                if await check_player_confirmed_tournament(telegram_id=telegram_id,tournament_id=tournament_id):
-
+                if await check_player_confirmed_tournament(telegram_id=telegram_id, tournament_id=tournament_id):
                     print(counter)
                     declared_members.remove(player)
                     total_message = total_message.replace(player, player + ' ✅')
-                    await bot.edit_message_text(text = total_message,
+                    await bot.edit_message_text(text=total_message,
                                                 chat_id=tournament_data['menu_chat_id'],
                                                 message_id=tournament_data['menu_message_id']
                                                 )
@@ -290,35 +299,42 @@ async def insert_member(message: types.Message, state: FSMContext) -> None:
             counter += 1
 
 
-
-async def confirm_members_process(state: FSMContext) -> None:
-    data = await state.get_data()
-
-
-async def get_tournament_process_menu(callback: types.CallbackQuery, state=FSMContext) -> None:
+async def get_tournament_process_menu(callback: types.CallbackQuery) -> None:
+    """
+    Функция отрабатывает после подтверждения участия в турнире.
+    Извлекает из callback.data ID турнира(UUID).
+    Меняет сообщение участника. Записывает в БД(all_tournaments >> players_list)
+     {"telegram_id": ["name_surname", "message_id"]}
+    :param callback:
+    :return:
+    """
     await TournamentStaes.absolute_insert.set()
-    print(callback.data)
+
     result_list_callback_data = callback.data.split(sep='-----')
-    print(result_list_callback_data)
     tournament_id = result_list_callback_data[1]
-
-
 
     telegram_id = callback.from_user.id
     name_surname = await confirm_participation(telegram_id=telegram_id, tournament_id=tournament_id)
     await insert_members_message_id(telegram_id=telegram_id,
                                     message_id=callback.message.message_id,
                                     member_name=name_surname)
-    data = await state.get_data()
-    print(data, 'hello')
+
     await callback.message.edit_text(text='Вы подтвердили свое участие, ожидайте начала турнира!',
                                      reply_markup=get_tournament_menu_keyboard())
 
 
 async def get_rival_and_table_number(telegram_id: str) -> tuple:
+    """
+    Функция, которая принимает на вход telegram_id.
+    Возвращает кортеж(соперник, который В ДАННЫЙ МОМЕНТ ИГРАЕТ С юзером и номер стола)
+    :param telegram_id:
+    :return: Кортеж(соперник, номер стола)
+    """
     rival = None
     table = None
+
     key_tournament = get_tournament_key_for_members(telegram_id=telegram_id)
+
     if telegram_id in buffer[key_tournament]["table_conditions"]:
         table_position = buffer[key_tournament]["table_conditions"].index(telegram_id)
         if table_position == 0:
@@ -340,13 +356,14 @@ async def get_rival_and_table_number(telegram_id: str) -> tuple:
 
 
 async def check_player_is_in_tournament(telegram_id: str) -> None:
+    """
+    Функция принимает telegram_id и проверяет, должен ли В ДАННЫЙ МОМЕНТ участник играть.
+    Если игрок сейчас должен играть, то сообщение изменяется и указывает на оппонента и номер стола.
+    Если же В ДАННЫЙ МОМЕНТ игрок не должен играть, сообщение изменяется и сообщает, что надо ожидать.
+    :param telegram_id:
+    :return: None
+    """
     tournament_key = get_tournament_key_for_members(telegram_id=telegram_id)
-    if telegram_id in buffer[tournament_key]['table_conditions']:
-        print('ZALUPA!!!!!')
-    else:
-        print('CHTO ZA HUETA!!!', type(telegram_id))
-        print(buffer[tournament_key]['table_conditions'])
-
 
     if telegram_id in buffer[tournament_key]['table_conditions']:
         rival, table = await get_rival_and_table_number(telegram_id=telegram_id)
@@ -363,20 +380,14 @@ async def check_player_is_in_tournament(telegram_id: str) -> None:
                                     reply_markup=get_tournament_menu_keyboard())
 
 
-
-async def start_tournament(callback: types.CallbackQuery, state=FSMContext) -> None:
+async def start_tournament(state=FSMContext) -> None:
     """
-    Модератор турнира начинает турнир, функция принимаем объект колбэка(нажатие на кнопку начать турнир)
+    Модератор турнира начинает турнир, функция принимаем объект callback(нажатие на кнопку начать турнир)
     функция из объекта state получает список игроков и их telegram_id, далее на этом основании формирует
-    пулл матчей.
-    :param callback:
+    pull матчей.
     :param state:
     :return: None
     """
-
-    # Используем в качестве буффера переменную буфер.
-    global buffer
-
     # Получаем данные из MemoryStorage создателя турнира.
     data = await state.get_data()
 
@@ -399,17 +410,15 @@ async def start_tournament(callback: types.CallbackQuery, state=FSMContext) -> N
         "tournament_rating": None,
     }
 
+    # Создаем объект класса Tournament.
     main_tournament = Tournament(table_counts=2,
                                  tournament_key=tournament_key)
-
-    print(buffer)
 
     for i in buffer[tournament_key]['tournament_members']:
         await check_player_is_in_tournament(telegram_id=i)
 
+    # Запускаем метод турнира, для его начала.
     await main_tournament.start_tournament()
-
-
 
 
 def register_tournaments_handlers(dp: Dispatcher) -> None:
