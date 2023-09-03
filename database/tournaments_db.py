@@ -160,17 +160,6 @@ async def check_player_confirmed_tournament(telegram_id: str, tournament_id: str
     return result
 
 
-# def add_live_games(games: list, tournament_id: str) -> None:
-#     cursor = conn.cursor()
-#     cursor.execute('''
-#         UPDATE all_tournaments
-#         SET live_games = ARRAY%s
-#         WHERE all_tournament_id = '%s';
-#     ''' % (games, tournament_id)
-#                    )
-#     conn.commit()
-#     cursor.close()
-
 
 async def get_name_surname_on_telegram_id(telegram_id: str) -> str:
     telegram_id = int(telegram_id)
@@ -201,3 +190,16 @@ async def get_all_members_rating(tournament_id: str) -> dict:
     cursor.close()
 
     return result
+
+
+async def set_tournament_identification_offline(tournament_id: str) -> None:
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE all_tournaments
+        SET all_tournament_is_active = 0
+        WHERE all_tournament_id = '%s'
+    """ % (tournament_id,)
+                   )
+
+    conn.commit()
+    cursor.close()

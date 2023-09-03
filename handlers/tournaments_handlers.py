@@ -1,4 +1,5 @@
 import asyncio
+import types
 
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
@@ -185,6 +186,7 @@ class Tournament:
                                                 message_id=message_id,
                                                 chat_id=member
                                                 )
+                await set_tournament_identification_offline(tournament_id=tournament_id)
                 buffer.pop(self.tournament_key)
                 print(buffer)
                 break
@@ -380,7 +382,7 @@ async def check_player_is_in_tournament(telegram_id: str) -> None:
                                     reply_markup=get_tournament_menu_keyboard())
 
 
-async def start_tournament(state=FSMContext) -> None:
+async def start_tournament(callback: types.CallbackQuery, state: FSMContext) -> None:
     """
     Модератор турнира начинает турнир, функция принимаем объект callback(нажатие на кнопку начать турнир)
     функция из объекта state получает список игроков и их telegram_id, далее на этом основании формирует
