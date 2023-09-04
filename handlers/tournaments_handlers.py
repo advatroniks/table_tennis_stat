@@ -1,5 +1,4 @@
 import asyncio
-import types
 
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
@@ -162,15 +161,20 @@ class Tournament:
             else:
                 print('Not free tables!')
 
+            # Блок, который отвечает за обновления рейтинга(учета очков в турнире).
+            # Каждые 2 секунды идет проверка по значению выше.(await asyncio.sleep())
             tournament_id = buffer[self.tournament_key]['tournament_id']
             players_dictionary = await get_all_members_rating(tournament_id=tournament_id)
             result_string = ''
             current_list = []
+
+            # Цикл обходит словарь, где ключ - telegram_id, score - список["имя фамилия", "message_id", "кол-во очков"]
             for player_name, score in players_dictionary.items():
                 current_list.append([score[0], score[2]])
 
+            # Присваивается в итоговый список отсортированный по убыванию очков current_list по ПЕРВОМУ ЭЛЕМЕНТУ,
+            # то есть по очкам. Пример: [["Иван Иванов", 4], ["Василий Андреев", 7]]. Будет сортировка по 4 и 7.
             total_list = sorted(current_list, key=lambda x: x[1], reverse=True)
-            print(total_list)
             for i in total_list:
                 result_string += f'{i[0]} - {i[1]}\n'
             print(result_string)
@@ -195,6 +199,8 @@ class Tournament:
 async def select_tournament_type(callback: types.CallbackQuery) -> None:
     """
     Функция принимает callback, меняет inline keyboard на выбор типа турнира
+    :param callback:
+    :returns: None
     """
     await callback.message.edit_text(text='Выберите тип турнира:')
     await callback.message.edit_reply_markup(reply_markup=get_select_tournament_keyboard())
@@ -207,6 +213,9 @@ async def get_members_counts_on_tournament(callback: types.CallbackQuery, state:
     выводит клавиатуру с выбором количества участников
     записывает в state_data и id чата и сообщения с меню,
     для дальнейшей работы с этим сообщением
+    :param callback:
+    :param state:
+    :returns: None
     """
     async with state.proxy() as tournament_data:
         tournament_data['menu_message_id'] = callback.message.message_id
@@ -222,6 +231,10 @@ async def insert_inline_members(callback: types.CallbackQuery, state: FSMContext
     записывает в state_data количество участников,
     указывает ключ counter-счетчик ввода количества участников
     меняет состояние на цикл ввода игроков
+
+    :param callback:
+    :param state:
+    :returns: None
     """
     tournament_id = await create_tournament(member_counts=int(callback.data[-1]))
 
@@ -241,6 +254,9 @@ async def insert_member(message: types.Message, state: FSMContext) -> None:
     """
     Функция принимает имя и фамилию игрока
     меняет сообщение, добавляя этого игрока в список участников турнира
+    :param message:
+    :param state:
+    :returns: None
     """
     member_telegram_id = await get_telegram_id(message.text)
 
@@ -388,6 +404,7 @@ async def start_tournament(callback: types.CallbackQuery, state: FSMContext) -> 
     функция из объекта state получает список игроков и их telegram_id, далее на этом основании формирует
     pull матчей.
     :param state:
+    :param callback:
     :return: None
     """
     # Получаем данные из MemoryStorage создателя турнира.

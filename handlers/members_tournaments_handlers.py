@@ -26,7 +26,7 @@ def get_tournament_key_for_members(telegram_id: str) -> str:
     Функция принимает telegram_id и проверяет, входит ли в состав
     ключа('buffer[tournament_key]') telegram_id. Если входит, то
     возвращает ключ.
-    :param telegram_id
+    :param telegram_id:
     :return: tournament_key
     """
     for i in buffer:
@@ -40,7 +40,7 @@ async def get_all_members_in_tournament(callback: types.CallbackQuery) -> None:
     """
     Функция получает callback, извлекает из него telegram_id, и меняет исходящее
     сообщение на список всех участников турнира.
-    :param callback
+    :param callback:
     :return: None
     """
     tournament_key = get_tournament_key_for_members(callback.from_user.id)
@@ -53,7 +53,7 @@ async def button_back_to_tournament_menu(callback: types.CallbackQuery) -> None:
     """
     Функция принимает callback, извлекает telegram_id из callback.
     Вызывает функцию, которая меняет сообщение на состояние(матч <<<-->>> ожидание матча)
-    :param callback
+    :param callback:
     :return: None
     """
     telegram_id = str(callback.from_user.id)
@@ -63,7 +63,7 @@ async def button_back_to_tournament_menu(callback: types.CallbackQuery) -> None:
 async def add_game_in_tournament(callback: types.CallbackQuery) -> None:
     """
     Функция принимает callback. Отрабатывает после того, как изменяется состояние сообщения на (ожидание матча ->> МАТЧ)
-    :param callback
+    :param callback:
     :returns: None
     """
     await bot.edit_message_text(text='Укажите счет матча:',
@@ -84,7 +84,8 @@ async def commit_game_to_database(callback: types.CallbackQuery, state: FSMConte
     >> свободен второй стол.
     В конце выводит из state(state.finish())
 
-    :param callback,state
+    :param callback:
+    :param state:
     :returns: None
     """
     print("start working functions commit_game_to_database...")
@@ -125,7 +126,7 @@ async def get_online_scoreboard(callback: types.CallbackQuery) -> None:
     Функция принимает callback. Меняет сообщение пользователя на указание столов и игроков.
     Прим: '1-й стол Петров - Иванов, 2-й стол Свободен'.
 
-    :param callback
+    :param callback:
     :returns: None
     """
     tournament_key = get_tournament_key_for_members(telegram_id=callback.from_user.id)
@@ -174,7 +175,7 @@ async def get_tournament_rating(callback: types.CallbackQuery) -> None:
     """
     Функция принимает callback. Меняет сообщение пользователя на указание:
     Имя Фамилия игрока: Кол-во Очков.
-    :param callback
+    :param callback:
     :returns: None
     """
     tournament_key = get_tournament_key_for_members(telegram_id=callback.from_user.id)
