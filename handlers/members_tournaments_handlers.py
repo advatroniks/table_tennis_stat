@@ -1,12 +1,17 @@
 from aiogram import Dispatcher
+from aiogram.dispatcher import FSMContext
+
 from states.member_tournament_states import *
+
 from keyboards.tournaments_keyboards import *
 from keyboards.members_tournament_keyboard import *
+
 from handlers.tournaments_handlers import get_rival_and_table_number
 from handlers.tournaments_handlers import check_player_is_in_tournament
-from aiogram.dispatcher import FSMContext
+
 from database.tournaments_db import *
 from database.members_tournament_dp import *
+
 from buffer import buffer
 from bot_instance import bot
 
@@ -17,15 +22,27 @@ from bot_instance import bot
 
 # Функция получает телеграм айди, на выходе дает ключ турнира, где на данный момент участник играет.
 def get_tournament_key_for_members(telegram_id: str) -> str:
+    """
+    Функция принимает telegram_id и проверяет, входит ли в состав
+    ключа('buffer[tournament_key]') telegram_id. Если входит, то
+    возвращает ключ.
+    :param telegram_id
+    :return: tournament_key
+    """
     for i in buffer:
         if i.find(str(telegram_id)) != -1:
             return i
         else:
-            print('bad news')
+            print('Error, telegram_id not in tournament_key!!!')
 
 
-# получить список всех участников турнира.
 async def get_all_members_in_tournament(callback: types.CallbackQuery) -> None:
+    """
+    Функция получает callback, извлекает из него telegram_id, и меняет исходящее
+    сообщение на список всех участников турнира.
+    :param callback
+    :return: None
+    """
     tournament_key = get_tournament_key_for_members(callback.from_user.id)
     print('hello world')
     await callback.message.edit_text(text=buffer[tournament_key]['name_surname_members'],
@@ -33,11 +50,22 @@ async def get_all_members_in_tournament(callback: types.CallbackQuery) -> None:
 
 
 async def button_back_to_tournament_menu(callback: types.CallbackQuery) -> None:
+    """
+    Функция принимает callback, извлекает telegram_id из callback.
+    Вызывает функцию, которая меняет сообщение на состояние(матч <<<-->>> ожидание матча)
+    :param callback
+    :return: None
+    """
     telegram_id = str(callback.from_user.id)
     await check_player_is_in_tournament(telegram_id=telegram_id)
 
 
-async def add_game_in_tournament(callback: types.CallbackQuery, state: FSMContext) -> None:
+async def add_game_in_tournament(callback: types.CallbackQuery) -> None:
+    """
+    Функция принимает callback. Отрабатывает после того, как изменяется состояние сообщения на (ожидание матча ->> МАТЧ)
+    :param callback
+    :returns: None
+    """
     await bot.edit_message_text(text='Укажите счет матча:',
                                 message_id=callback.message.message_id,
                                 reply_markup=add_game_keyboard(),
@@ -46,6 +74,19 @@ async def add_game_in_tournament(callback: types.CallbackQuery, state: FSMContex
 
 
 async def commit_game_to_database(callback: types.CallbackQuery, state: FSMContext) -> None:
+    """
+    Функция получает callback и state(MembersStates.commit_game_to_database).
+    Получает player_1(UUID), player_2(UUID), счет(callback.data).
+    Добавляет в базу данных с указанием tournament_id(UUID).
+    После, меняет состояние сообщения player_1 и player_2 на (матч ->>> ОЖИДАНИЕ МАТЧА).
+    После освобождает столы(Выставляет значение 0 на индексы стола, на котором была игра)
+    в поле buffer[tournament_key]['table_conditions'] прим: ['9999', '3232', '0', '0'] >>
+    >> свободен второй стол.
+    В конце выводит из state(state.finish())
+
+    :param callback,state
+    :returns: None
+    """
     print("start working functions commit_game_to_database...")
     first_player = callback.from_user.id
     second_player_table_set = await get_rival_and_table_number(telegram_id=str(first_player))
@@ -75,24 +116,34 @@ async def commit_game_to_database(callback: types.CallbackQuery, state: FSMConte
     buffer[tournament_key]['table_conditions'][table_numer_digit] = 0
     buffer[tournament_key]['table_conditions'][table_numer_digit - 1] = 0
 
-    print(buffer[tournament_key])
+    print(f'Game added. Free table is {table_numer_digit}')
     await state.finish()
 
 
 async def get_online_scoreboard(callback: types.CallbackQuery) -> None:
+    """
+    Функция принимает callback. Меняет сообщение пользователя на указание столов и игроков.
+    Прим: '1-й стол Петров - Иванов, 2-й стол Свободен'.
+
+    :param callback
+    :returns: None
+    """
     tournament_key = get_tournament_key_for_members(telegram_id=callback.from_user.id)
     message_id = await get_message_id_in_active_tournament(telegram_id=callback.from_user.id)
 
     table_conditions = buffer[tournament_key]["table_conditions"]
 
+    # Результирующая строка, которая в следствии будет выведена в сообщении
     result = ''
 
-    print(table_conditions)
-
+    # Счетчик столов, для их последующего указания, после пары игроков меняется на 1 значение.
     table_counter = 1
+    # Счетчик игроков, после добавления ПЕРВОГО игрока = 1, после добавления ВТОРОГО меняется на 0.
     players_counter = 0
+    # Счетчик пустого стола, по аналогии после добавления ПЕРВОГО ПОСЛЕДОВАТЕЛЬНОГО нуля = 1, после ВТОРОГО = 0.
     null_counter = 0
 
+    # Цикл, который проверяет выше описанные значения и в зависимости от них добавляет в итоговую строку данные.
     for i in table_conditions:
         if i == 0 and null_counter == 0:
             result += f'{table_counter} - й Стол: Свободен'
@@ -120,6 +171,12 @@ async def get_online_scoreboard(callback: types.CallbackQuery) -> None:
 
 
 async def get_tournament_rating(callback: types.CallbackQuery) -> None:
+    """
+    Функция принимает callback. Меняет сообщение пользователя на указание:
+    Имя Фамилия игрока: Кол-во Очков.
+    :param callback
+    :returns: None
+    """
     tournament_key = get_tournament_key_for_members(telegram_id=callback.from_user.id)
     result_string = buffer[tournament_key]['tournament_rating']
 
