@@ -33,7 +33,7 @@ async def select_rival(message: types.Message, state=FSMContext) -> None:
 buffer_add_advanced_game = {}
 
 
-async def callback_states_set(callback: types.CallbackQuery, state=FSMContext) -> None:
+async def callback_states_set(callback: types.CallbackQuery) -> None:
     """
     Функция принимает callback. В зависимости от него отправляет сообщение
     (быстрый / полный) тип добавления матча. Если тип ПОЛНЫЙ, то устанавливает
@@ -103,8 +103,6 @@ async def add_set_score(message: types.Message, state=FSMContext) -> None:
         buffer_add_advanced_game[message.from_user.id][1] += 1
     else:
         buffer_add_advanced_game[message.from_user.id][2] += 1
-
-    print(buffer_add_advanced_game[message.from_user.id])  # techincal info
 
     sets_number = buffer_add_advanced_game[message.from_user.id][1] + buffer_add_advanced_game[message.from_user.id][2]
 

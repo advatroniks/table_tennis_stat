@@ -1,20 +1,22 @@
-from uuid import UUID
+import datetime
 
 from aiogram import types, Dispatcher
-from states.registration_states import PlayerRegistrationState
 from aiogram.dispatcher import FSMContext
-import datetime
+
+from states.registration_states import PlayerRegistrationState
+
 from database.registration_db import record_data, conn
+
 from keyboards.registration_keyboards import get_choice_keyboard
 
+
 async def check_handler(message: types.Message) -> None:
-    await message.reply('Пожалуйства, введите корректные данные!')
-
-
-check_name_surname = lambda message: not message.text.isalpha()
-check_age = lambda message: not message.text.isdigit()
-check_age_range = lambda message: not (90 > int(message.text) > 3)
-check_game_style = lambda message: not message.text.lower() in ['атакующий', 'защитный']
+    """
+    Функция отрабатывает, при введении некорректных данных.
+    :param message:
+    :returns: None
+    """
+    await message.reply('Пожалуйста, введите корректные данные!')
 
 
 async def set_name_player(message: types.Message, state: FSMContext) -> None:
@@ -65,10 +67,14 @@ async def set_game_style(message: types.Message, state: FSMContext) -> None:
     await state.finish()
 
 
+# Лямбда функции - кастомные фильтры для регистратора хендлеров.
+check_name_surname = lambda message: not message.text.isalpha()
+check_age = lambda message: not message.text.isdigit()
+check_age_range = lambda message: not (90 > int(message.text) > 3)
+check_game_style = lambda message: not message.text.lower() in ['атакующий', 'защитный']
+
+
 def registser_user_handlers(dp: Dispatcher) -> None:
-    '''
-    Register user handlers
-    '''
     dp.register_message_handler(check_handler, check_name_surname, state=PlayerRegistrationState.reg_name)
     dp.register_message_handler(set_name_player, state=PlayerRegistrationState.reg_name)
 

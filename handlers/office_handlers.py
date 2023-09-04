@@ -1,18 +1,21 @@
-from aiogram import Dispatcher, types
-from database.office_db import *
-from states.add_game_states import AddGameStates
-from database.add_game_db import get_rivals, get_first_player
-from states.office_states import OfficeStates
+from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 
+from database.add_game_db import get_rivals, get_first_player
+from database.office_db import *
+
+from states.add_game_states import AddGameStates
+from states.office_states import OfficeStates
 
 
 async def get_correct_last_game_data(iter_obj: tuple) -> str:
     """
     Функция принимате кортеж:
     (Имя Фамилия 1 игрока, счет первого игрока, счет второго игрока, Имя Фамилия 2 игрока)
-    Функция Приводит данные к виду: Фамилия И: 3-0 :Фамилия И
+    Функция Приводит данные к виду: Фамилия И: 3-0 :Фамилия
     Возвращает результирующую строку
+    :param iter_obj:
+    :returns: Результирующая строка вида Фамилия И: 3-0 :Фамилия
     """
 
     first_player_list = iter_obj[0].split()
@@ -29,10 +32,12 @@ async def get_correct_last_game_data(iter_obj: tuple) -> str:
 
 async def get_full_statistics(callback: types.CallbackQuery) -> None:
     """
-    Функция получает на вход объект Коллбэка,
+    Функция получает на вход объект callback,
     Функция в переменную data сохраняет список всех игр
-    На выходе функция выводит в клиент список всех игр игрока,
+    На выходе функция выводит пользователю список всех игр,
     Отформатированного к результату get_correct_last_game_data
+    :param callback:
+    :returns: None
     """
     data = await get_last_10_games(callback=callback)
     result_string = ''
@@ -44,12 +49,15 @@ async def get_full_statistics(callback: types.CallbackQuery) -> None:
     print(result_string)
     await callback.message.answer(text=result_string)
 
+
 async def get_win_lose_counts(callback: types.CallbackQuery) -> None:
     """
-    Функция принимает коллбэк, полсе в data сохраняется кортеж,
+    Функция принимает callback, после в data сохраняется кортеж,
     (кол-во игр, кол-во побед, кол-во поражений)
-    Функция обратывает эти данные и приводит к виду результирующей строки
-    для ответа в клиент
+    Функция обрабатывает эти данные и приводит к виду результирующей строки
+    для ответа клиенту.
+    :param callback:
+    :returns: None
     """
     data = await get_win_loses_statistics(callback=callback)
     result_string = ' Всего игр: %s \nПобед: %s \nПоражений: %s' % data
@@ -67,16 +75,17 @@ async def insert_player_for_rate(callback: types.CallbackQuery) -> None:
     await OfficeStates.get_player_for_rate.set()
 
 
-async def get_player_data_for_rate(message: types.Message, state = FSMContext) -> None:
+async def get_player_data_for_rate(message: types.Message, state: FSMContext) -> None:
     """
     Функция принимает message, state
-    Функция полуает id авторизованного игрока, id игрока для сравнения
-    Выводит в клиент личную статистику игрока для сравнения,
-    Далее выводит в клиент статистику очных встреч,
-    Далее выводит Результаты и даты игр.
+    Функция получает id авторизованного игрока, id игрока для сравнения.
+    Выводит клиенту личную статистику игрока для сравнения,
+    Далее выводит игроку статистику очных встреч,
+    После выводит Результаты и даты игр.
+    :param message:
+    :param state:
+    :returns: None
     """
-    # async with state.proxy() as data:
-    #     data['rate_name'] = message.text
 
     self_player = await get_first_player(message.from_user.id)
     player_id_for_rate = await get_rivals(message.text)
@@ -84,7 +93,7 @@ async def get_player_data_for_rate(message: types.Message, state = FSMContext) -
     data = await get_personal_games(player_id_for_rate, self_player)
     personal_statistic = await get_personal_counter_win_lose(self_player, player_id_for_rate)
 
-    result = await get_lose_win_rate_player(player_id_for_rate) # личная статистика сравниваемого игрокаа
+    result = await get_lose_win_rate_player(player_id_for_rate)  # личная статистика сравниваемого игрокаа
     player_name = message.text + '\n'
     result_string = player_name + 'Всего игр: %s \nПобед: %s \nПоражений: %s \nЛичные встречи:\n' % result
     total_string = ''.join(map(str, personal_statistic))
@@ -97,12 +106,8 @@ async def get_player_data_for_rate(message: types.Message, state = FSMContext) -
         non_permanent_string = await get_correct_last_game_data(i)
         result_string += non_permanent_string + '\n'
 
-
     await state.finish()
     await message.answer(result_string)
-
-
-
 
 
 def register_office_handlers(dp: Dispatcher) -> None:

@@ -1,15 +1,22 @@
+import os
+from dotenv import load_dotenv
+
 from aiogram import Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import FSMContext
 
 from states.registration_states import PlayerRegistrationState
 from states.add_game_states import AddGameStates
+
 from database.registration_db import check_registration_user
 from database.postgresql_connect import conn
-from keyboards.office_keyboard import main_office_keyboard, moderator_office_keyboard, administrator_office_keyboard
-from aiogram.dispatcher import FSMContext
 from database.office_db import get_win_loses_statistics
-from dotenv import load_dotenv
-import os
+
+from keyboards.office_keyboard import main_office_keyboard, moderator_office_keyboard, administrator_office_keyboard
+
+from handlers.tournaments_handlers import get_tournament_key_for_members
+
+from buffer import buffer
 
 
 storage = MemoryStorage()
@@ -34,6 +41,7 @@ ADD_TYPE_GAME_INFORMATION = """
 *Расширенный - указание счета в каждом сете
 """
 
+
 async def cmd_start(message: types.Message) -> None:
     """
         Функция обрабатывает команду старт.
@@ -55,7 +63,7 @@ async def cmd_registration(message: types.Message) -> None:
         await message.answer(text='Пожалуйста, введите ваше имя. ')
         await PlayerRegistrationState.reg_name.set()
     else:
-        await message.answer('Вы уже зарегестрированны!')
+        await message.answer('Вы уже зарегистрированы!')
 
 
 async def cmd_cancel(message: types.Message, state=FSMContext) -> None:
@@ -63,7 +71,10 @@ async def cmd_cancel(message: types.Message, state=FSMContext) -> None:
     await state.reset_data()
     data = await state.get_data()
     await state.finish()
-    print(data)
+    tournament_key = get_tournament_key_for_members(telegram_id=message.from_user.id)
+    buffer.pop(tournament_key)
+
+    print(data, '\n', buffer)
 
 
 async def cmd_description(message: types.Message) -> None:
@@ -72,6 +83,7 @@ async def cmd_description(message: types.Message) -> None:
 
 async def cmd_help(message: types.Message) -> None:
     await message.reply(text=HELP_COMMAND_STRING)
+
 
 async def cmd_add_game(message: types.Message) -> None:
     await message.answer('Введите Имя и Фамилию соперника! ')
@@ -94,16 +106,11 @@ async def cmd_open_office(message: types.Message) -> None:
 
     result_string = 'Личный кабинет:' + interim_str
 
-
     await message.answer(text=result_string,
                          reply_markup=keyboard)
 
-89028066003
-def registrate_main_commands(dp: Dispatcher) -> None:
-    """
-    Регистрация хендлеров комманд
-    """
 
+def registrate_main_commands(dp: Dispatcher) -> None:
     dp.register_message_handler(cmd_start, commands=['start'])
     dp.register_message_handler(cmd_registration, commands=['registration'])
     dp.register_message_handler(cmd_cancel, commands=['cancel'], state='*')

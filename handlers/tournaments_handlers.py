@@ -69,8 +69,6 @@ class Tournament:
         Метод генерации всех матчей при инициализации
         :return: matches - список всех матчей(list)
         """
-        # tournament_id = self.tournament_id
-        # print(tournament_id)
         matches = list()
         counter = 0
         for i in self.players:
@@ -120,7 +118,6 @@ class Tournament:
         # Если есть свободный стол, то на него добавляется матч.
         while len(buffer[self.tournament_key]['games']) > 0:
             counter = 0
-            print('after main')
             await asyncio.sleep(2)
             if 0 in buffer[self.tournament_key]['table_conditions']:
                 finished_table = buffer[self.tournament_key]['table_conditions'].index(0)
@@ -177,9 +174,7 @@ class Tournament:
             total_list = sorted(current_list, key=lambda x: x[1], reverse=True)
             for i in total_list:
                 result_string += f'{i[0]} - {i[1]}\n'
-            print(result_string)
             buffer[self.tournament_key]['tournament_rating'] = result_string
-            print(buffer[self.tournament_key]['tournament_rating'])
 
         while True:
             await asyncio.sleep(10)
@@ -415,8 +410,13 @@ async def start_tournament(callback: types.CallbackQuery, state: FSMContext) -> 
 
     # Получаем ключ, для доступа через буфер в данные турнира
     tournament_key = data['tournament_key']
+
+    # Добавляем в ключ турнира telegram_id создателя турнира, что бы на случай отмены удалить все данные из буфера.
+    tournament_key += str(callback.from_user.id) + '|'
+
     buffer.update({tournament_key: None})
     players_tuple = tuple(members_data.keys())
+
 
     # создаем параметры для турнира
     buffer[tournament_key] = {
