@@ -1,9 +1,4 @@
-import asyncio
-from uuid import uuid4
-
-import psycopg
 from database.postgresql_connect import cursor, conn
-from aiogram import types
 
 
 async def get_rivals(rival_name: str):

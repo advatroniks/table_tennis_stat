@@ -29,3 +29,5 @@ six==1.16.0
 typing_extensions==4.5.0
 urllib3==2.0.4
 yarl==1.9.2
+SQLAlchemy~=2.0.21
+pydantic~=2.4.0
