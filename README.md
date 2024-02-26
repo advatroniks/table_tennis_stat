@@ -19,4 +19,3 @@ Table_tennis_stat.
 
 Стек проекта (Aiogram, Postgresql(psycopg), git, docker)
 
-Tikhon Chugainov(c) 2023
